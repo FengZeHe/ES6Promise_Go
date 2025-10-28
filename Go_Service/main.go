@@ -1,46 +1,43 @@
 package main
 
 import (
+	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-// 定义一个简单的数据结构（模拟用户数据）
-type User struct {
-	ID   string `json:"id" form:"id"` // 支持JSON和表单参数
-	Name string `json:"name" form:"name"`
-	Age  int    `json:"age" form:"age"`
-}
-
 func main() {
 	r := gin.Default()
-	r.Use(corsMiddleware())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},                                                 // 允许所有来源（生产环境需指定具体域名）
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},  // 允许的请求方法
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"}, // 允许的请求头
+		ExposeHeaders:    []string{"Content-Length"},                                    // 允许前端读取的响应头
+		AllowCredentials: true,                                                          // 允许携带Cookie（跨域请求时）
+		MaxAge:           12 * time.Hour,                                                // 预检请求的缓存时间（12小时）
+	}))
+
 	r.GET("/hi", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Hello",
-		})
+		random := rand.Intn(3)
+		if random == 0 {
+			log.Println("返回失败")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "ERROR",
+			})
+		} else {
+			log.Println("返回成功")
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Hello",
+			})
+		}
 	})
 
 	if err := r.Run(":8080"); err != nil {
 		panic(err)
 	}
 
-}
-
-func corsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
-		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-
-		c.Next()
-	}
 }
