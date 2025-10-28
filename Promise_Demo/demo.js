@@ -43,7 +43,10 @@ async function hi() {
 async function callHi(times) {
     try {
         const list = Array.from({ length: times }, () => hi())
-        const results = await Promise.all(list);
+        // const results = await Promise.all(list);
+        // const results = await Promise.race(list);
+        // const results = await Promise.allSettled(list);
+        const results = await Promise.any(list);
 
         console.log("结果是:", results)
     } catch (err) {
@@ -51,5 +54,10 @@ async function callHi(times) {
     }
 }
 
-callHi(2)
+// callHi(3)
+
+Promise.resolve(123).then(val => console.log("success",val)); 
+Promise.resolve(Promise.reject("error!!")).catch(err => console.log(err)); 
+
+
 
